@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
-//#include <unistd.h>
+#include <unistd.h>
 #include "shell.h"
 #include "interpreter.h"
 #include "shellmemory.h"
@@ -23,11 +23,15 @@ int main(int argc, char *argv[]) {
     
     //init shell memory
     mem_init();
-    while(1) {							
-        printf("%c ", prompt);
-        // here you should check the unistd library 
-        // so that you can find a way to not display $ in the batch mode
-        fgets(userInput, MAX_USER_INPUT-1, stdin);
+    while(1) {
+    
+        if (isatty(STDIN_FILENO)) {
+            printf("%c ", prompt);
+        }   
+
+        if (fgets(userInput, MAX_USER_INPUT-1, stdin) == NULL) {
+            break;
+        }
         errorCode = parseInput(userInput);
         if (errorCode == -1) exit(99);	// ignore all other errors
         memset(userInput, 0, sizeof(userInput));
@@ -59,6 +63,7 @@ int parseInput(char inp[]) {
         if (inp[ix] == '\0') break;
         ix++; 
     }
-    errorCode = interpreter(words, w);
+    errorCode = interpreter(words, w); // this makes a call back to interpreter with new line
+    // can either fix by exiting if eof, or returning a list of commands to run
     return errorCode;
 }

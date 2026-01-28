@@ -4,7 +4,7 @@
 #include "shellmemory.h"
 #include "shell.h"
 
-int MAX_ARGS_SIZE = 3; //6
+int MAX_ARGS_SIZE = 3;
 
 int badcommand() {
     printf("Unknown Command\n");
@@ -22,6 +22,7 @@ int quit();
 int set(char *var, char *value);
 int print(char *var);
 int source(char *script);
+int echo(char* s);
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
@@ -55,17 +56,26 @@ int interpreter(char *command_args[], int args_size) {
         return set(command_args[1], command_args[2]);
 
     } else if (strcmp(command_args[0], "print") == 0) {
+        //print
         if (args_size != 2)
             return badcommand();
         return print(command_args[1]);
 
     } else if (strcmp(command_args[0], "source") == 0) {
+        //source
         if (args_size != 2)
             return badcommand();
         return source(command_args[1]);
 
-    } else
+    } else if (strcmp(command_args[0], "echo") == 0) {
+        if (args_size != 2) {
+            return badcommand();
+        }
+        return echo(command_args[1]);
+    } 
+    else {
         return badcommand();
+    }
 }
 
 int help() {
@@ -128,4 +138,23 @@ int source(char *script) {
     fclose(p);
 
     return errCode;
+}
+
+int echo(char* s) {
+
+    if (s[0] == '$') {
+        char* resp = mem_get_value(s+1);
+        if (strcmp(resp, "Variable does not exist") == 0) {
+            printf("\n");
+        } 
+        else {
+            printf("%s\n", resp);
+            //free(resp)?
+        }
+        
+    } 
+    else {
+        printf("%s\n", s);
+    }
+    return 0;
 }

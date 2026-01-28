@@ -1,4 +1,0 @@
-help
-set x this_is_a_var_x
-echo $x
-print x

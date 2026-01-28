@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "shellmemory.h"
 #include "shell.h"
 
@@ -17,12 +22,17 @@ int badcommandFileDoesNotExist() {
     return 3;
 }
 
+
 int help();
 int quit();
 int set(char *var, char *value);
 int print(char *var);
 int source(char *script);
 int echo(char* s);
+int my_ls();
+int my_mkdir(char* dirname);
+int my_touch(char* filename);
+int my_cd(char* dirname);
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
@@ -68,11 +78,43 @@ int interpreter(char *command_args[], int args_size) {
         return source(command_args[1]);
 
     } else if (strcmp(command_args[0], "echo") == 0) {
+        //echo
         if (args_size != 2) {
             return badcommand();
         }
         return echo(command_args[1]);
-    } 
+
+    } else if (strcmp(command_args[0], "my_ls") == 0) {
+        //my_ls
+        if (args_size != 1) {
+            return badcommand();
+        }
+        return my_ls();
+
+    } else if (strcmp(command_args[0], "my_mkdir") == 0) {
+        //my_mkdir
+        if (args_size != 2) {
+            return badcommand();
+        }
+        return my_mkdir(command_args[1]);
+
+    } else if (strcmp(command_args[0], "my_touch") == 0) {
+        //my_touch
+        if (args_size != 2) {
+            return badcommand();
+        }
+        return my_touch(command_args[1]);
+
+    } else if (strcmp(command_args[0], "my_cd") == 0) {
+        //my_cd
+        if (args_size != 2) {
+            return badcommand();
+        }
+        return my_cd(command_args[1]);
+    }
+
+
+
     else {
         return badcommand();
     }
@@ -146,15 +188,110 @@ int echo(char* s) {
         char* resp = mem_get_value(s+1);
         if (strcmp(resp, "Variable does not exist") == 0) {
             printf("\n");
-        } 
-        else {
+        } else {
             printf("%s\n", resp);
-            //free(resp)?
+            free(resp);
         }
-        
-    } 
-    else {
+    } else {
         printf("%s\n", s);
     }
     return 0;
 }
+
+//Helper function for comparing strings - used in my_ls()
+int compare_strings(const void *a, const void *b) {
+    // Cast the void pointers to char pointers (or char array pointers)
+    const char **ia = (const char **)a;
+    const char **ib = (const char **)b;
+    // Use strcmp to compare the actual strings
+    return strcmp(*ia, *ib);
+}
+
+int my_ls() {
+
+    DIR *dir = opendir("."); //open current directory
+
+    char* entries[1024];
+    int index = 0;
+
+    while(1) {
+        struct dirent *entry = readdir(dir);
+        if (entry != NULL) { 
+            entries[index++] = strdup(entry->d_name); //add entry names to entries
+        } else { //no more entries
+            break;
+        }
+    }
+
+    qsort(entries, index, sizeof(char*), compare_strings); //sort entries array
+
+    for (int i = 0; i < index; i++) {
+        printf("%s\n", entries[i]);
+        free(entries[i]);
+    }
+
+    closedir(dir);
+
+    return 0;
+}
+
+//Helper function to check alphanumeric strings
+int isAlphanumeric(char* str) {
+    for(int i = 0; i < strlen(str); i++) {
+        if (!isalnum(str[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int my_mkdir(char *dirname) {
+    char *name = "";
+    int need_free = 0; //indicates if we need to free name
+
+    if (dirname[0] == '$') {
+        name = mem_get_value(dirname + 1);
+
+        if (strcmp(name, "Variable does not exist") == 0 || !isAlphanumeric(name)) {
+            printf("Bad command: my_mkdir\n");
+            return 1;
+        }
+
+        need_free = 1;
+
+    } else {
+        if (!isAlphanumeric(dirname)) {
+            printf("Bad command: my_mkdir\n");
+            return 1;
+        }
+        name = dirname;
+    }
+
+    if (mkdir(name, 0755) == -1) {
+        perror("mkdir failed");
+        if (need_free) free(name);
+        return 1;
+    }
+
+    if (need_free) free(name);
+    return 0;
+}
+
+int my_touch (char* filename) {
+
+    FILE *fptr;
+
+    // Create a file
+    fptr = fopen(filename, "w");
+
+    // Close the file
+    fclose(fptr);
+
+    return 0;
+}
+
+int my_cd (char* dirname) {
+
+    return 0;
+}
+

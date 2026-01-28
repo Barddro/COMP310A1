@@ -58,7 +58,7 @@ void mem_set_value(char *var_in, char *value_in) {
 char *mem_get_value(char *var_in) {
     int i;
     for (i = 0; i < MEM_SIZE; i++){
-        if (strcmp(shellmemory[i].var, var_in) == 0){
+        if (strcmp(shellmemory[i].var, var_in) == 0) {
             return strdup(shellmemory[i].value);
         } 
     }

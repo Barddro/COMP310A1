@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -292,6 +293,10 @@ int my_touch (char* filename) {
 
 int my_cd (char* dirname) {
 
-    return 0;
+    if (chdir(dirname) == 0) {
+        return 0;
+    }
+    printf("Bad command: my_cd\n");
+    return 1;
 }
 

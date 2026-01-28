@@ -4,7 +4,7 @@
 #include "shellmemory.h"
 #include "shell.h"
 
-int MAX_ARGS_SIZE = 3;
+int MAX_ARGS_SIZE = 3; //6
 
 int badcommand() {
     printf("Unknown Command\n");

@@ -43,16 +43,20 @@ int main(int argc, char *argv[]) {
 int wordEnding(char c) {
     // You may want to add ';' to this at some point,
     // or you may want to find a different way to implement chains.
-    return c == '\0' || c == '\n' || c == ' ';
+    return c == '\0' || c == '\n' || c == ' ' || c == ';';
 }
 
 int parseInput(char inp[]) {
+
     char tmp[200], *words[100];                            
-    int ix = 0, w = 0;
+    int ix = 0;
+    int w = 0;
     int wordlen;
     int errorCode;
-    for (ix = 0; inp[ix] == ' ' && ix < 1000; ix++); // skip white spaces
+
     while (inp[ix] != '\n' && inp[ix] != '\0' && ix < 1000) {
+        for (ix; inp[ix] == ' ' && ix < 1000; ix++); // skip white spaces
+
         // extract a word
         for (wordlen = 0; !wordEnding(inp[ix]) && ix < 1000; ix++, wordlen++) {
             tmp[wordlen] = inp[ix];                        
@@ -60,10 +64,27 @@ int parseInput(char inp[]) {
         tmp[wordlen] = '\0';
         words[w] = strdup(tmp);
         w++;
-        if (inp[ix] == '\0') break;
+        if (inp[ix] == '\0') {
+            break;
+        } 
+        else if (inp[ix] == ';') {
+            errorCode = interpreter(words, w);
+            for (int i = 0; i < w; i++) {
+                free(words[i]);
+            }
+            w = 0;
+        }
+
         ix++; 
+
     }
-    errorCode = interpreter(words, w); // this makes a call back to interpreter with new line
+     // this makes a call back to interpreter with new line
     // can either fix by exiting if eof, or returning a list of commands to run
+    errorCode = interpreter(words, w);
+    
+    for (int i = 0; i < w; i++) {
+        free(words[i]);
+    }
+
     return errorCode;
 }

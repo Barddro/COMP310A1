@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include "shellmemory.h"
 #include "shell.h"
@@ -34,6 +35,7 @@ int my_ls();
 int my_mkdir(char* dirname);
 int my_touch(char* filename);
 int my_cd(char* dirname);
+int run(char* words[]);
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
@@ -112,11 +114,21 @@ int interpreter(char *command_args[], int args_size) {
             return badcommand();
         }
         return my_cd(command_args[1]);
-    }
 
+    } else if (strcmp(command_args[0], "run") == 0) {
+        //run
+        //create copy of command_args without 'run':
+        char* args[args_size];
+        for (int i = 1; i < args_size; i++) {
+            args[i - 1] = command_args[i];
+        }
+        args[args_size - 1] = NULL;
+        
+        int errorCode = run(args);
 
-
-    else {
+        return errorCode;
+        
+    } else {
         return badcommand();
     }
 }
@@ -210,6 +222,24 @@ int compare_strings(const void *a, const void *b) {
 
 int my_ls() {
 
+    struct dirent **namelist;
+    int i,n;
+
+
+    n = scandir(".", &namelist, 0, alphasort);
+    if (n < 0)
+        perror("scandir");
+    else {
+        for (i = 0; i < n; i++) {
+            printf("%s\n", namelist[i]->d_name);
+            free(namelist[i]);
+            }
+        }
+    free(namelist);
+
+    return 0;
+
+    /*
     DIR *dir = opendir("."); //open current directory
 
     char* entries[1024];
@@ -234,6 +264,7 @@ int my_ls() {
     closedir(dir);
 
     return 0;
+    */
 }
 
 //Helper function to check alphanumeric strings
@@ -298,5 +329,19 @@ int my_cd (char* dirname) {
     }
     printf("Bad command: my_cd\n");
     return 1;
+}
+
+int run(char* words[]) {
+
+    pid_t pid = fork();
+    if (pid != 0) {
+        wait(NULL);
+    }
+    else {
+        execvp(words[0], words);
+        sleep(5);
+    }
+    
+    return 0;
 }
 

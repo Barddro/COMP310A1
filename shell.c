@@ -16,17 +16,17 @@ int main(int argc, char *argv[]) {
     char userInput[MAX_USER_INPUT];		// user's input stored here
     int errorCode = 0;					// zero means no error, default
 
-    //init user input
+    // init user input
     for (int i = 0; i < MAX_USER_INPUT; i++) {
         userInput[i] = '\0';
     }
     
-    //init shell memory
+    // init shell memory
     mem_init();
     while(1) {
     
-        if (isatty(STDIN_FILENO)) {
-            printf("%c ", prompt);
+        if (isatty(STDIN_FILENO)) { // isatty returns 1 for interactive mode, 0 for batch mode
+            printf("%c ", prompt); // print shell prompt
         }   
 
         if (fgets(userInput, MAX_USER_INPUT-1, stdin) == NULL) {
@@ -40,20 +40,23 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+// helper function for parseInput that checks if a word is ending
 int wordEnding(char c) {
-    // You may want to add ';' to this at some point,
-    // or you may want to find a different way to implement chains.
+    // added ';' to list of word endings to support one-liners
     return c == '\0' || c == '\n' || c == ' ' || c == ';';
 }
 
+// parseInput parses the input to terminal and passes it into the interpreter
+// Returns an error code if interpreter fails
 int parseInput(char inp[]) {
 
-    char tmp[200], *words[100];                            
-    int ix = 0;
-    int w = 0;
-    int wordlen;
-    int errorCode;
+    char tmp[200], *words[100]; // tmp - buffer for one word, words - array of words                         
+    int ix = 0;                 // index for input string
+    int w = 0;                  // index of the current word in 'words
+    int wordlen;                // index of current character in current word
+    int errorCode;              // return error code from interpreter
 
+    // loop over entire inputted command/string
     while (inp[ix] != '\n' && inp[ix] != '\0' && ix < 1000) {
         for (ix; inp[ix] == ' ' && ix < 1000; ix++); // skip white spaces
 
@@ -61,30 +64,29 @@ int parseInput(char inp[]) {
         for (wordlen = 0; !wordEnding(inp[ix]) && ix < 1000; ix++, wordlen++) {
             tmp[wordlen] = inp[ix];                        
         }
-        tmp[wordlen] = '\0';
-        words[w] = strdup(tmp);
+
+        tmp[wordlen] = '\0'; // set null terminator 
+        words[w] = strdup(tmp); // copy the current word of command into 'words'
         w++;
-        if (inp[ix] == '\0') {
+
+        if (inp[ix] == '\0') { // if inputted string terminates, stop parsing completely
             break;
-        } 
-        else if (inp[ix] == ';') {
-            errorCode = interpreter(words, w);
-            for (int i = 0; i < w; i++) {
-                free(words[i]);
+        } else if (inp[ix] == ';') { // if we reach ';'...
+            errorCode = interpreter(words, w); //run current comand collected in words
+            for (int i = 0; i < w; i++) { // free all words in 'words'
+                free(words[i]); 
             }
-            w = 0;
+            w = 0; // reset index of 'words' for next command to be parsed
         }
-
         ix++; 
-
     }
-     // this makes a call back to interpreter with new line
+    // this makes a call back to interpreter with new line
     // can either fix by exiting if eof, or returning a list of commands to run
     errorCode = interpreter(words, w);
     
-    for (int i = 0; i < w; i++) {
+    for (int i = 0; i < w; i++) { // free all words in 'words'
         free(words[i]);
     }
 
-    return errorCode;
+    return errorCode; // return error code if produced
 }

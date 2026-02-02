@@ -11,20 +11,21 @@
 #include "shellmemory.h"
 #include "shell.h"
 
-int MAX_ARGS_SIZE = 3;
+int MAX_ARGS_SIZE = 3; // defines maximum argument size
 
+// helper function for interpreter to indicate invalid command
 int badcommand() {
     printf("Unknown Command\n");
     return 1;
 }
 
-// For source command only
+// for source command only
 int badcommandFileDoesNotExist() {
     printf("Bad command: File not found\n");
     return 3;
 }
 
-
+// function prototypes for interpreter() function
 int help();
 int quit();
 int set(char *var, char *value);
@@ -42,7 +43,7 @@ int badcommandFileDoesNotExist();
 int interpreter(char *command_args[], int args_size) {
     int i;
 
-    if (args_size < 1 || args_size > MAX_ARGS_SIZE) {
+    if (args_size < 1 || args_size > MAX_ARGS_SIZE) { // invalid argument size
         return badcommand();
     }
 
@@ -50,85 +51,69 @@ int interpreter(char *command_args[], int args_size) {
         command_args[i][strcspn(command_args[i], "\r\n")] = 0;
     }
 
-    if (strcmp(command_args[0], "help") == 0) {
-        //help
+    if (strcmp(command_args[0], "help") == 0) { // help command
         if (args_size != 1)
             return badcommand();
         return help();
 
-    } else if (strcmp(command_args[0], "quit") == 0) {
-        //quit
+    } else if (strcmp(command_args[0], "quit") == 0) { // quit command
         if (args_size != 1)
             return badcommand();
         return quit();
 
-    } else if (strcmp(command_args[0], "set") == 0) {
-        //set
+    } else if (strcmp(command_args[0], "set") == 0) { // set command
         if (args_size != 3)
             return badcommand();
         return set(command_args[1], command_args[2]);
 
-    } else if (strcmp(command_args[0], "print") == 0) {
-        //print
+    } else if (strcmp(command_args[0], "print") == 0) { // print command
         if (args_size != 2)
             return badcommand();
         return print(command_args[1]);
 
-    } else if (strcmp(command_args[0], "source") == 0) {
-        //source
+    } else if (strcmp(command_args[0], "source") == 0) { // source command
         if (args_size != 2)
             return badcommand();
         return source(command_args[1]);
 
-    } else if (strcmp(command_args[0], "echo") == 0) {
-        //echo
-        if (args_size != 2) {
+    } else if (strcmp(command_args[0], "echo") == 0) { // echo command
+        if (args_size != 2) 
             return badcommand();
-        }
         return echo(command_args[1]);
 
-    } else if (strcmp(command_args[0], "my_ls") == 0) {
-        //my_ls
-        if (args_size != 1) {
+    } else if (strcmp(command_args[0], "my_ls") == 0) { // my_ls command
+        if (args_size != 1)
             return badcommand();
-        }
         return my_ls();
 
-    } else if (strcmp(command_args[0], "my_mkdir") == 0) {
-        //my_mkdir
-        if (args_size != 2) {
+    } else if (strcmp(command_args[0], "my_mkdir") == 0) { // my_mkdir command
+        if (args_size != 2)
             return badcommand();
-        }
         return my_mkdir(command_args[1]);
 
-    } else if (strcmp(command_args[0], "my_touch") == 0) {
-        //my_touch
-        if (args_size != 2) {
+    } else if (strcmp(command_args[0], "my_touch") == 0) { // my_touch command
+        if (args_size != 2) 
             return badcommand();
-        }
         return my_touch(command_args[1]);
 
-    } else if (strcmp(command_args[0], "my_cd") == 0) {
-        //my_cd
-        if (args_size != 2) {
+    } else if (strcmp(command_args[0], "my_cd") == 0) { // my_cd command
+        if (args_size != 2) 
             return badcommand();
-        }
         return my_cd(command_args[1]);
 
-    } else if (strcmp(command_args[0], "run") == 0) {
-        //run
-        //create copy of command_args without 'run':
+    } else if (strcmp(command_args[0], "run") == 0) { // run command
+        // create copy of command_args without 'run'
         char* args[args_size];
         for (int i = 1; i < args_size; i++) {
             args[i - 1] = command_args[i];
         }
         args[args_size - 1] = NULL;
         
-        int errorCode = run(args);
+        int errorCode = run(args); // use args as parameter for run()
 
         return errorCode;
         
-    } else {
+    } else { // invalid command
         return badcommand();
     }
 }
@@ -195,10 +180,11 @@ int source(char *script) {
     return errCode;
 }
 
+// prints input to shell
 int echo(char* s) {
 
-    if (s[0] == '$') {
-        char* resp = mem_get_value(s+1);
+    if (s[0] == '$') { // do variable substitution if arg begins with '$'
+        char* resp = mem_get_value(s+1); // response string
         if (strcmp(resp, "Variable does not exist") == 0) {
             printf("\n");
         } else {
@@ -209,65 +195,29 @@ int echo(char* s) {
         printf("%s\n", s);
     }
     return 0;
+    
 }
 
-//Helper function for comparing strings - used in my_ls()
-int compare_strings(const void *a, const void *b) {
-    // Cast the void pointers to char pointers (or char array pointers)
-    const char **ia = (const char **)a;
-    const char **ib = (const char **)b;
-    // Use strcmp to compare the actual strings
-    return strcmp(*ia, *ib);
-}
-
+// prints subdirectories and files within current directory
 int my_ls() {
 
-    struct dirent **namelist;
-    int i,n;
+    struct dirent **namelist; // array of directory entries returned by scandir
 
-
-    n = scandir(".", &namelist, 0, alphasort);
-    if (n < 0)
+    int n = scandir(".", &namelist, 0, alphasort); // puts subdirectory and file names in namelist (in alphanumeric sorted order), returns number of entries found
+    if (n < 0) { // no entries found
         perror("scandir");
-    else {
-        for (i = 0; i < n; i++) {
-            printf("%s\n", namelist[i]->d_name);
+    } else {
+        for (int i = 0; i < n; i++) {
+            printf("%s\n", namelist[i]->d_name); //prints d_name field of namelist[i]
             free(namelist[i]);
-            }
         }
+    }
     free(namelist);
 
     return 0;
-
-    /*
-    DIR *dir = opendir("."); //open current directory
-
-    char* entries[1024];
-    int index = 0;
-
-    while(1) {
-        struct dirent *entry = readdir(dir);
-        if (entry != NULL) { 
-            entries[index++] = strdup(entry->d_name); //add entry names to entries
-        } else { //no more entries
-            break;
-        }
-    }
-
-    qsort(entries, index, sizeof(char*), compare_strings); //sort entries array
-
-    for (int i = 0; i < index; i++) {
-        printf("%s\n", entries[i]);
-        free(entries[i]);
-    }
-
-    closedir(dir);
-
-    return 0;
-    */
 }
 
-//Helper function to check alphanumeric strings
+// Helper function to check if a given string is alphanumeric
 int isAlphanumeric(char* str) {
     for(int i = 0; i < strlen(str); i++) {
         if (!isalnum(str[i])) {
@@ -277,29 +227,37 @@ int isAlphanumeric(char* str) {
     return 1;
 }
 
+// creates a new directory within current directoy
 int my_mkdir(char *dirname) {
-    char *name = "";
-    int need_free = 0; //indicates if we need to free name
+    char *name = ""; // name of directory you want to make
+    int need_free = 0; // indicates if we need to free allocated string 'name'
 
+    // check if argument is variable
     if (dirname[0] == '$') {
         name = mem_get_value(dirname + 1);
 
+        // variable doesn't exist in shell memory
         if (strcmp(name, "Variable does not exist") == 0 || !isAlphanumeric(name)) {
             printf("Bad command: my_mkdir\n");
             return 1;
         }
-
+        
+        // here, we make a copy of variable in memory as a string (name), 
+        // so we must remember to free this allocated space
         need_free = 1;
 
     } else {
-        if (!isAlphanumeric(dirname)) {
+        
+        if (!isAlphanumeric(dirname)) { // check if given directory name is not alphanumeric
             printf("Bad command: my_mkdir\n");
             return 1;
         }
         name = dirname;
+
     }
 
-    if (mkdir(name, 0755) == -1) {
+    if (mkdir(name, 0755) == -1) { // 0755 --> standard permissions for new directory
+        // mkdir returns -1 on error
         perror("mkdir failed");
         if (need_free) free(name);
         return 1;
@@ -309,6 +267,7 @@ int my_mkdir(char *dirname) {
     return 0;
 }
 
+// creates a new file in current directory
 int my_touch (char* filename) {
 
     FILE *fptr;
@@ -322,6 +281,7 @@ int my_touch (char* filename) {
     return 0;
 }
 
+// sets current directory to 'dirname'
 int my_cd (char* dirname) {
 
     if (chdir(dirname) == 0) {
@@ -331,17 +291,17 @@ int my_cd (char* dirname) {
     return 1;
 }
 
+// runs specified command in a new shell
 int run(char* words[]) {
 
-    pid_t pid = fork();
-    if (pid != 0) {
+    pid_t pid = fork(); // fork to create a child process to exec command in
+    if (pid != 0) { // pid == 0 if process is a child, so we only wait if process is parent
         wait(NULL);
-    }
-    else {
+    } else { // otherwise, we use execvp to run a command passed in as the individual 'words' that make up that command
         execvp(words[0], words);
-        sleep(5);
     }
     
     return 0;
 }
+
 

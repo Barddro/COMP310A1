@@ -25,7 +25,7 @@ int match(char *model, char *var) {
 
 void mem_init(){
     int i;
-    for (i = 0; i < MEM_SIZE; i++){		
+    for (i = 0; i < MEM_SIZE; i++) {		
         shellmemory[i].var   = "none";
         shellmemory[i].value = "none";
     }
@@ -35,16 +35,16 @@ void mem_init(){
 void mem_set_value(char *var_in, char *value_in) {
     int i;
 
-    for (i = 0; i < MEM_SIZE; i++){
-        if (strcmp(shellmemory[i].var, var_in) == 0){
+    for (i = 0; i < MEM_SIZE; i++) {
+        if (strcmp(shellmemory[i].var, var_in) == 0) {
             shellmemory[i].value = strdup(value_in);
             return;
         } 
     }
 
     //Value does not exist, need to find a free spot.
-    for (i = 0; i < MEM_SIZE; i++){
-        if (strcmp(shellmemory[i].var, "none") == 0){
+    for (i = 0; i < MEM_SIZE; i++) {
+        if (strcmp(shellmemory[i].var, "none") == 0) {
             shellmemory[i].var   = strdup(var_in);
             shellmemory[i].value = strdup(value_in);
             return;
